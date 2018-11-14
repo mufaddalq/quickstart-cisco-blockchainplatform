@@ -71,7 +71,7 @@
                     "default": "Allowed SSH Access CIDR"
                 },
                 "BlockChainAccessCIDR": {
-                    "default": "Allowed Application Access CIDR"
+                    "default": "Allowed Blockchain Access CIDR"
                 },
                 "VPCID": {
                     "default": "VPC ID"
@@ -82,10 +82,8 @@
     "Parameters": {
         "InstanceType": {
             "AllowedValues": [
-                "t2.micro",
-                "t2.small",
-                "t2.medium",
                 "t2.large",
+                "t2.xlarge",
                 "m3.large",
                 "m3.xlarge",
                 "m3.2xlarge",
@@ -94,8 +92,8 @@
                 "m4.2xlarge",
                 "m4.4xlarge"
             ],
-            "Default": "t2.micro",
-            "Description": "Amazon EC2 instance type for the bastion instances",
+            "Default": "t2.xlarge",
+            "Description": "Amazon EC2 instance type for the blockchain instances",
             "Type": "String"
         },
         "KeyPairName": {
@@ -169,10 +167,25 @@
     "Mappings": {
         "AWSAMIRegionMap": {
             "AMI": {
-                "US1604HVM": "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20181012"
+                "US1604HVM": "ubuntu/images/hvm-ssd/ubuntu-xenial-16.04-amd64-server-20181106"
+            },
+            "ap-southeast-1": {
+                "US1604HVM": "ami-0726f3348d4881a51"
+            },
+            "eu-west-1": {
+                "US1604HVM": "ami-02abad8823357325b"
+            },
+            "eu-west-2": {
+                "US1604HVM": "ami-069c167cb1c8cefde"
             },
             "us-east-1": {
-                "US1604HVM": "ami-0735ea082a1534cac"
+                "US1604HVM": "ami-060b7d3753f753d90"
+            },
+            "us-east-2": {
+                "US1604HVM": "ami-05a31d6b0aec6d76c"
+            },
+            "us-west-2": {
+                "US1604HVM": "ami-0c4929b9eb7b0eb5c"
             }
         }
     },
@@ -212,7 +225,7 @@
         "BlockChainSecurityGroup": {
             "Type": "AWS::EC2::SecurityGroup",
             "Properties": {
-                "GroupDescription": "Enables SSH Access",
+                "GroupDescription": "Enables Blockchain Access",
                 "VpcId": {
                     "Ref": "VPCID"
                 },
@@ -240,21 +253,24 @@
                         "CidrIp": {
                             "Ref": "BlockChainAccessCIDR"
                         }
-                    },
+                    }
+                ]
+            }
+        },
+        "ESSecurityGroup": {
+            "Type": "AWS::EC2::SecurityGroup",
+            "Properties": {
+                "GroupDescription": "Elasticsearch Access",
+                "VpcId": {
+                    "Ref": "VPCID"
+                },
+                "SecurityGroupIngress": [
                     {
                         "IpProtocol": "tcp",
                         "FromPort": "443",
                         "ToPort": "443",
                         "CidrIp": {
                             "Ref": "BlockChainAccessCIDR"
-                        }
-                    },
-                    {
-                        "IpProtocol": "icmp",
-                        "FromPort": "-1",
-                        "ToPort": "-1",
-                        "CidrIp": {
-                            "Ref": "RemoteAccessCIDR"
                         }
                     }
                 ]
@@ -436,9 +452,9 @@
                                 "command": "echo \"start installation\""
                             },
                             "02_install_node": {
-                                "command": "docker run --name installer -i --volume /cbp/certs:/certs --volume /cbp/installer:/installer --volume /var/run/docker.sock:/var/run/docker.sock --env-file /cbp/installer/env ciscoblockchain/vera_installer"
+                                "command": "docker run --name installer -i --volume /cbp/certs:/certs --volume /cbp/installer:/installer --volume /var/run/docker.sock:/var/run/docker.sock --env-file /cbp/installer/env ciscoblockchain/vera_installer:0.5.0-aws"
                             },
-                            "10_end_install": {
+                            "03_end_install": {
                                 "command": "echo \"done installation\""
                             }
                         }
@@ -632,7 +648,7 @@
                                 "command": "echo \"start installation\""
                             },
                             "02_install_node": {
-                                "command": "docker run --name installer -i --volume /cbp/certs:/certs --volume /cbp/installer:/installer --volume /var/run/docker.sock:/var/run/docker.sock --env-file /cbp/installer/env ciscoblockchain/vera_installer"
+                                "command": "docker run --name installer -i --volume /cbp/certs:/certs --volume /cbp/installer:/installer --volume /var/run/docker.sock:/var/run/docker.sock --env-file /cbp/installer/env ciscoblockchain/vera_installer:0.5.0-aws"
                             },
                             "03_end_install": {
                                 "command": "echo \"done installation\""
@@ -828,7 +844,7 @@
                                 "command": "echo \"start installation\""
                             },
                             "02_install_node": {
-                                "command": "docker run --name installer -i --volume /cbp/certs:/certs --volume /cbp/installer:/installer --volume /var/run/docker.sock:/var/run/docker.sock --env-file /cbp/installer/env ciscoblockchain/vera_installer"
+                                "command": "docker run --name installer -i --volume /cbp/certs:/certs --volume /cbp/installer:/installer --volume /var/run/docker.sock:/var/run/docker.sock --env-file /cbp/installer/env ciscoblockchain/vera_installer:0.5.0-aws"
                             },
                             "03_end_install": {
                                 "command": "echo \"done installation\""
@@ -1453,7 +1469,7 @@
                     ],
                     "SecurityGroupIds": [
                         {
-                            "Ref": "BlockChainSecurityGroup"
+                            "Ref": "ESSecurityGroup"
                         }
                     ]
                 }
